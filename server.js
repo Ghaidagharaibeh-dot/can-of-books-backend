@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 
 const server = express();
 server.use(cors());
+server.use(express.json());
 
 const PORT = process.env.PORT;
 
@@ -18,69 +19,112 @@ mongoose.connect("mongodb://localhost:27017/books", {
 const bookSchema = new mongoose.Schema({
   title: String,
   description: String,
-  status: Boolean,
+});
+
+const ownerSchema = new mongoose.Schema({
   ownerEmail: String,
+  books: [bookSchema],
 });
 
 const bookModel = mongoose.model("book", bookSchema);
+const ownerModel = mongoose.model("owner", ownerSchema);
 
-function seedingBooks() {
+function seedBookCollection() {
   const mindset = new bookModel({
-    ownerEmail: "ghidaghraibeh12@gmail.com",
-    title: "mindset",
+    title: "minset",
     description:
       "In this brilliant book, she shows how success in school,work, sports, the arts, and almost every area of human endeavor can be dramatically influenced by how we think about our talents and abilities. People with a fixed mindset — those who believe that abilities are fixed — are less likely to flourish than those with a growth mindset — those who believe that abilities can be developed. Mindset reveals how great parents, teachers, managers, and athletes can put this idea to use to foster outstanding accomplishment. ",
-    status: true,
   });
   const veronikaDecidesToDie = new bookModel({
-    ownerEmail: "ghidaghraibeh12@gmail.com",
-    title: "Veronika decides  to die",
+    title: "veronika Decides To Die",
     description:
       "Veronika, an attractive 24-year-old woman living in Ljubljana, Slovenia, has loving parents, an okay job, decent boyfriends, and so on. However she s tired of her routine life and tries to commit suicide. Veronikas attempt fails and she wakes up in Villete, a local mental hospital. ",
-    status: true,
-  });
-  const thePowerOfNow = new bookModel({
-    ownerEmail: "ghidaghraibeh12@gmail.com",
-    title: "The power of now",
-    description:
-      'living in the now is the truest path to happiness and enlightenment. And while this message may not seem stunningly original or fresh, Tolles clear writing, supportive voice and enthusiasm make this an excellent manual for anyone whos ever wondered what exactly "living in the now" means. Foremost, Tolle is a world-class teacher, able to explain complicated concepts in concrete language. More importantly, within a chapter of reading this book, readers are already holding the world in a different container--more conscious of how thoughts and emotions get in the way of their ability to live in genuine peace and happiness ',
-    status: true,
   });
 
   mindset.save();
   veronikaDecidesToDie.save();
-  thePowerOfNow.save();
 }
-seedingBooks();
+seedBookCollection();
 
+function seedOwnerCollection() {
+  const ghadeer = new ownerModel({
+    ownerEmail: "ghadeerkhasawneh91@gmail.com",
+    books: [
+      {
+        title: "minset",
+        description:
+          "In this brilliant book, she shows how success in school,work, sports, the arts, and almost every area of human endeavor can be dramatically influenced by how we think about our talents and abilities. People with a fixed mindset — those who believe that abilities are fixed — are less likely to flourish than those with a growth mindset — those who believe that abilities can be developed. Mindset reveals how great parents, teachers, managers, and athletes can put this idea to use to foster outstanding accomplishment. ",
+      },
+      {
+        title: "veronika Decides To Die",
+        description:
+          "Veronika, an attractive 24-year-old woman living in Ljubljana, Slovenia, has loving parents, an okay job, decent boyfriends, and so on. However she s tired of her routine life and tries to commit suicide. Veronikas attempt fails and she wakes up in Villete, a local mental hospital. ",
+      },
+    ],
+  });
 
-server.get("/books", getBooksFun);
+  const ghaida = new ownerModel({
+    ownerEmail: "ghidaghraibeh12@gmail.com",
+    books: [
+      {
+        title: "veronika Decides To Die",
+        description:
+          "Veronika, an attractive 24-year-old woman living in Ljubljana, Slovenia, has loving parents, an okay job, decent boyfriends, and so on. However she s tired of her routine life and tries to commit suicide. Veronikas attempt fails and she wakes up in Villete, a local mental hospital. ",
+      },
+      {
+        title: "mindset",
+        description:
+          "In this brilliant book, she shows how success in school,work, sports, the arts, and almost every area of human endeavor can be dramatically influenced by how we think about our talents and abilities. People with a fixed mindset — those who believe that abilities are fixed — are less likely to flourish than those with a growth mindset — those who believe that abilities can be developed. Mindset reveals how great parents, teachers, managers, and athletes can put this idea to use to foster outstanding accomplishment. ",
+      },
+    ],
+  });
 
-function getBooksFun(req, res) {
-  const reqEmail = req.query.email;
+  ghadeer.save();
+  ghaida.save();
+}
 
-  bookModel.find({ ownerEmail: reqEmail }, function (err, outputs) {
+seedOwnerCollection();
+
+server.get("/books", getBooksHandler);
+// server.post("/addbooks", addBooksFun);
+
+//http://localhost:3001/books?email=ghadeerkhasawneh91@gmail.com
+
+function getBooksHandler(req, res) {
+  let { email } = req.query;
+  // let {name} = req.query
+  ownerModel.find({ ownerEmail: email }, function (err, ownerData) {
     if (err) {
-      console.log("Error");
+      console.log("is not working");
     } else {
-      // console.log(outputs);
-      // console.log(outputs);
-      res.send(outputs);
+      console.log(ownerData);
+      // console.log(ownerData[0])
+      // console.log(ownerData[0].books)
+      res.send(ownerData[0].books);
     }
+  });
+
+  server.listen(PORT, () => {
+    console.log(`Listening on PORT ${PORT}`);
   });
 }
 
+server.post("/addBook", addBooksHandler);
 
-// //http:localhost:3033/book?book=
+function addBooksHandler(req, res) {
+  const { title, description, ownerEmail } = req.body;
+  console.log(bookName);
 
-// server.get('/books',addBookFun);
-
-// function addBookFun (req,res){
-//   res.send('test');
-//   console.log(res.send('test'))
-// }
-
-
-server.listen(PORT, () => {
-  console.log(`Listening on PORT ${PORT}`);
-});
+  ownerModel.find({ ownerEmail: ownerEmail }, (error, ownerData) => {
+    if (error) {
+      res.send("is not working");
+    } else {
+      ownerData[0].books.push({
+        title: title,
+        description: description,
+      });
+      ownerData[0].save();
+      res.send(ownerData[0].books);
+    }
+  });
+}

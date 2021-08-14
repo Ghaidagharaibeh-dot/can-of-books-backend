@@ -47,7 +47,7 @@ function seedBookCollection() {
   mindset.save();
   veronikaDecidesToDie.save();
 }
-// seedBookCollection();
+seedBookCollection();
 
 function seedOwnerCollection() {
   const ghadeer = new ownerModel({
@@ -90,7 +90,7 @@ function seedOwnerCollection() {
   ghaida.save();
 }
 
-// seedOwnerCollection();
+seedOwnerCollection();
 
 server.get("/books", getBooksHandler);
 // server.post("/addbooks", addBooksFun);
@@ -114,7 +114,7 @@ function getBooksHandler(req, res) {
 server.post("/addBook", addBooksHandler);
 
 function addBooksHandler(req, res) {
-  const { title, description, email } = req.body;
+  const { email, title, description, status } = req.body;
 
   console.log(title, description, email);
 
@@ -126,6 +126,7 @@ function addBooksHandler(req, res) {
       ownerData[0].books.push({
         title: title,
         description: description,
+        status: status,
       });
       ownerData[0].save();
       res.send(ownerData[0].books);
